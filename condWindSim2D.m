@@ -45,6 +45,7 @@ Nwin = p.Results.Nwin ;
 
 newY = [y(:); newY0(:)];
 newZ = [z(:); newZ0(:)];
+
 Nm = numel(newY);
 [Ny,N] = size(u0);
 %% moving mean (optional)
@@ -102,20 +103,14 @@ phase(phase<0)= phase(phase<0) + 2*pi;
 
 %% Replace the random phases by the known phases from the target locations
 phi = 2*pi*rand(Nfreq,Nm);% Random phases for unknown locations
-indTarget = nan(1,Ny);
-for ii=1:Ny
-    dummyInd = find(newY(:)==y(ii) & newZ(:)==z(ii) );
-    if ~isempty(dummyInd) && ~isnan(dummyInd)
-        indTarget(ii) = dummyInd;
-        phi(:,indTarget(ii)) =  phase(:,ii);
-    end
-end
+[indTarget]= find(ismember([newY(:),newZ(:)],[y(:),z(:)],'row'));
+phi(:,indTarget) =  phase;
+
+
 
 %% generate turbulence in the new grid
-
 dy = abs(newY(:)'-newY(:));
 dz = abs(newZ(:)'-newZ(:));
-
 
 meanU = nan(Nwin,Nm);
 u = zeros(numel(t),Nm); % Output
@@ -129,10 +124,26 @@ for pp = 1:Nwin % For each wind window (Nwin> 1  if Non-stationary fluctuations)
         indEnd = numel(t);
     end
     % interpolate moving mean at each time window
-    F1 = scatteredInterpolant(y(:),z(:),movMeanU0(:,pp));
-    F1.Method = 'linear' ;
-    F1.ExtrapolationMethod = 'linear'  ;
-    meanU(pp,:)  = F1(newY,newZ);
+    if numel(unique(y))==1 && numel(unique(newY))==1 % single vertical line
+        [~,indSort] = sort(z);
+        F = griddedInterpolant(z(indSort),movMeanU0(indSort,pp));
+        F.ExtrapolationMethod = 'nearest';
+        F.Method = 'pchip';
+        meanU(pp,:) = F(newZ);
+    elseif numel(unique(z))==1  && numel(unique(newZ))==1 % single horizontal line
+        [~,indSort] = sort(y);
+        F = griddedInterpolant(y(indSort),movMeanU0(indSort,pp));
+        F.ExtrapolationMethod = 'nearest';
+        F.Method = 'pchip';
+        meanU(pp,:) = F(newY);
+    elseif numel(unique(z))==1  && numel(unique(newZ))>1 || numel(unique(y))==1  && numel(unique(newY))>1
+        meanU(pp,:) = mean(movMeanU0(:,pp)); % we assume spatial homogeneity
+    else
+        F1 = scatteredInterpolant(y(:),z(:),movMeanU0(:,pp));
+        F1.Method = 'linear' ;
+        F1.ExtrapolationMethod = 'nearest'  ;
+        meanU(pp,:)  = F1(newY,newZ);
+    end
     MeanUCoh = 1/2*(meanU(pp,:)+meanU(pp,:)');
 
     % Get A
@@ -195,8 +206,7 @@ end % names affected at each nodes
             % no need to change anything
             cohU = cohDavenport(f,Cy,Cz,dy,dz,meanU);
             S = (newSu*newSu').*cohU;
-            [L,D]=ldl(S,'lower'); % a LDL decomposition is applied this time
-            G = L*sqrt(D);
+            [G]=chol(S,'lower'); % a LDL decomposition is applied this time
             A = G*exp(1i.*phi');
         end
     end
@@ -213,10 +223,27 @@ end % names affected at each nodes
         % The first X locations are the reference locations
 
         % interpolate the target PSD at the new locations
+
+
+     if numel(unique(y))==1 && numel(unique(newY))==1 % single vertical line
+        [~,indSort] = sort(z);
+        F0 = griddedInterpolant(z(indSort),Su(indSort));
+        F0.ExtrapolationMethod = 'nearest';
+        newSu = F0(newZ);
+    elseif numel(unique(z))==1  && numel(unique(newZ))==1 % single horizontal line
+        [~,indSort] = sort(y);
+        F0 = griddedInterpolant(y(indSort),Su(indSort));
+        F0.ExtrapolationMethod = 'nearest';
+        newSu = F0(newY);
+    elseif numel(unique(z))==1  && numel(unique(newZ))>1 || numel(unique(y))==1  && numel(unique(newY))>1
+        newSu = mean(Su); % we assume spatial homogeneity
+    else
         F0 = scatteredInterpolant(y,z,Su);
         F0.Method =  'linear' ;
         F0.ExtrapolationMethod =  'nearest'  ;
         newSu = F0(newY,newZ);
+    end
+
         % for each target node
         lowTrimat = nan(Nm,Ny); % lower triangular matrix
         Weight = nan(Nm,Ny); % Each weight is defined w.r.t to reference nodes
