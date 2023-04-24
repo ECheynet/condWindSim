@@ -1,4 +1,5 @@
 # Constrained wind simulation in a 2D plane
+[![View condWindSim on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://se.mathworks.com/matlabcentral/fileexchange/128423-condwindsim)
 
 ## Summary
  
