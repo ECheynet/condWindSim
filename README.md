@@ -15,7 +15,10 @@ The repository contains
 
   - coherence.m: Calculates the coherence for two signals.
   - condWindSim2D.m: Generates a 2D conditional/constrained wind field.
-  - The Matlab Live Script Documentation.mlx, which documents how to use the function.
+  - The Matlab Live Script Documentation.mlx, which documents how to use the function in 2D
+  - The Matlab Live Script Documentation2.mlx, which documents how to use the function in 1D fr a vertical lines
+  - The Matlab Live Script Documentation2.mlx, which documents how to use the function in 1D fr a horizontal lines
+  
 
 
 This is the first version of the repository, there may be many bugs. Do not hesitate to contact me if you find any.
