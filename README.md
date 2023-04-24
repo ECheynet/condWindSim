@@ -17,4 +17,4 @@ The repository contains
   - The Matlab Live Script Documentation.mlx, which documents how to use the function.
 
 
-## This is the first version of the repository, there may be many bugs. Do not hesitate to contact me if you find any.
+This is the first version of the repository, there may be many bugs. Do not hesitate to contact me if you find any.
